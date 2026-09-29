@@ -1,0 +1,55 @@
+/* Dark Map Theme */
+.dark-map {
+    filter: invert(100%) hue-rotate(180deg) brightness(45%) contrast(85%);
+}
+
+.leaflet-container { background: #020617 !important; border: none !important; }
+
+/* Fixed Layout Control */
+#bg-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+}
+
+/* Scrollable View Sections */
+.view-section { 
+    display: none; 
+}
+
+.view-section.active { 
+    display: block; 
+}
+
+/* Sidebar Nav */
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-link.active {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.nav-link-inactive {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    opacity: 0.6;
+}
+
+/* Professional Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }

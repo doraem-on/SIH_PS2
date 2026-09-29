@@ -1,0 +1,11 @@
+services:
+  bhoomi:
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - workspace:/workspace
+    environment:
+      BHOOMI_DB: /workspace/workspace.sqlite
+volumes:
+  workspace:

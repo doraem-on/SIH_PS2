@@ -1,0 +1,489 @@
+[
+  {
+    "id": "landslide-size",
+    "title": "Landslide event size",
+    "algorithm": "RandomForestClassifier",
+    "source": "NASA Global Landslide Catalog",
+    "source_url": "https://catalog.data.gov/dataset/global-landslide-catalog-export",
+    "data_sha256": "2c4898899dd4f373c4320e121c5b655ebb5394d431fa42e57ec4828d07d48b04",
+    "artifact_sha256": "f2a8c34a854c6d4b6835b151fb088b7d551b20a64248e44e0311627a8a3a850f",
+    "trained_at": "2026-09-29T15:47:01.837871+00:00",
+    "seed": 42,
+    "dataset_rows": 11033,
+    "train_rows": 8138,
+    "test_rows": 2035,
+    "features": 6,
+    "split": "Chronological holdout: train before 2016-05-11, test on/after. Entire dates separated.",
+    "inputs": [
+      {
+        "name": "latitude",
+        "label": "Latitude",
+        "type": "number",
+        "min": -46.7748,
+        "max": 72.6275,
+        "default": 28.3928
+      },
+      {
+        "name": "longitude",
+        "label": "Longitude",
+        "type": "number",
+        "min": -179.9807656,
+        "max": 179.991364,
+        "default": 56.4742
+      },
+      {
+        "name": "month",
+        "label": "Month",
+        "type": "number",
+        "min": 1.0,
+        "max": 12.0,
+        "default": 7.0
+      },
+      {
+        "name": "landslide_trigger",
+        "label": "Landslide trigger",
+        "type": "category",
+        "options": [
+          "construction",
+          "continuous_rain",
+          "dam_embankment_collapse",
+          "downpour",
+          "earthquake",
+          "flooding",
+          "freeze_thaw",
+          "mining",
+          "monsoon",
+          "no_apparent_trigger",
+          "other",
+          "rain",
+          "snowfall_snowmelt",
+          "tropical_cyclone",
+          "unknown",
+          "volcano"
+        ],
+        "default": "downpour"
+      },
+      {
+        "name": "landslide_category",
+        "label": "Landslide category",
+        "type": "category",
+        "options": [
+          "complex",
+          "creep",
+          "debris_flow",
+          "earth_flow",
+          "lahar",
+          "landslide",
+          "mudslide",
+          "other",
+          "riverbank_collapse",
+          "rock_fall",
+          "snow_avalanche",
+          "translational_slide",
+          "unknown"
+        ],
+        "default": "landslide"
+      },
+      {
+        "name": "landslide_setting",
+        "label": "Landslide setting",
+        "type": "category",
+        "options": [
+          "above_river",
+          "above_road",
+          "below_road",
+          "bluff",
+          "burned_area",
+          "deforested_slope",
+          "engineered_slope",
+          "mine",
+          "natural_slope",
+          "other",
+          "retaining_wall",
+          "unknown",
+          "urban"
+        ],
+        "default": "unknown"
+      }
+    ],
+    "metrics": {
+      "accuracy": 0.5110565110565111,
+      "balanced_accuracy": 0.47973672752752217,
+      "macro_f1": 0.4255449203912047,
+      "baseline_accuracy": 0.4358722358722359
+    },
+    "classes": [
+      "large",
+      "medium",
+      "small"
+    ],
+    "confusion_matrix": [
+      [
+        81,
+        49,
+        63
+      ],
+      [
+        190,
+        191,
+        506
+      ],
+      [
+        83,
+        104,
+        768
+      ]
+    ],
+    "classification_report": {
+      "large": {
+        "precision": 0.2288135593220339,
+        "recall": 0.41968911917098445,
+        "f1-score": 0.2961608775137112,
+        "support": 193.0
+      },
+      "medium": {
+        "precision": 0.5552325581395349,
+        "recall": 0.2153325817361894,
+        "f1-score": 0.3103168155970755,
+        "support": 887.0
+      },
+      "small": {
+        "precision": 0.5744203440538519,
+        "recall": 0.8041884816753927,
+        "f1-score": 0.6701570680628273,
+        "support": 955.0
+      },
+      "accuracy": 0.5110565110565111,
+      "macro avg": {
+        "precision": 0.4528221538384735,
+        "recall": 0.47973672752752217,
+        "f1-score": 0.4255449203912047,
+        "support": 2035.0
+      },
+      "weighted avg": {
+        "precision": 0.5332794715431688,
+        "recall": 0.5110565110565111,
+        "f1-score": 0.477842783682925,
+        "support": 2035.0
+      }
+    },
+    "limitation": "Research baseline for the size of an already reported event. Reporting bias, approximate locations, geographic imbalance, and weak temporal generalization limit use. Does not predict whether a landslide will occur or declare land safe.",
+    "versions": {
+      "python": "3.12.13",
+      "sklearn": "1.9.1"
+    },
+    "evaluation_note": "Single frozen holdout; no hyperparameter selection on test data. Probabilities are not calibrated.",
+    "target": "Reported size: small / medium / large (very_large and catastrophic grouped with large)",
+    "excluded_rows": 860,
+    "train_class_counts": {
+      "medium": 5664,
+      "small": 1812,
+      "large": 662
+    },
+    "test_class_counts": {
+      "small": 955,
+      "medium": 887,
+      "large": 193
+    }
+  },
+  {
+    "id": "forest-cover",
+    "title": "Terrain \u2192 forest cover",
+    "algorithm": "ExtraTreesClassifier",
+    "source": "UCI Covertype \u00b7 US Forest Service",
+    "source_url": "https://archive.ics.uci.edu/dataset/31/covertype",
+    "data_sha256": "89a975c2457cd48e824238ae43c5a3cb762e42c4b4078d9b44a4514055105f6d",
+    "artifact_sha256": "6ea208fd0562d21bf815d9a231b15c2cc7a3ea386ca2ca26049f3de86507afa4",
+    "trained_at": "2026-09-29T15:47:07.036594+00:00",
+    "seed": 42,
+    "dataset_rows": 581012,
+    "train_rows": 120000,
+    "test_rows": 30000,
+    "features": 10,
+    "split": "Stratified 80/20 split of a seeded 150,000-row stratified sample (120,000 train / 30,000 test).",
+    "inputs": [
+      {
+        "name": "elevation",
+        "label": "Elevation",
+        "type": "number",
+        "min": 1867.0,
+        "max": 3858.0,
+        "default": 2996.0
+      },
+      {
+        "name": "aspect",
+        "label": "Aspect",
+        "type": "number",
+        "min": 0.0,
+        "max": 360.0,
+        "default": 127.0
+      },
+      {
+        "name": "slope",
+        "label": "Slope",
+        "type": "number",
+        "min": 0.0,
+        "max": 65.0,
+        "default": 13.0
+      },
+      {
+        "name": "horizontal_distance_to_hydrology",
+        "label": "Horizontal distance to hydrology",
+        "type": "number",
+        "min": 0.0,
+        "max": 1390.0,
+        "default": 218.0
+      },
+      {
+        "name": "vertical_distance_to_hydrology",
+        "label": "Vertical distance to hydrology",
+        "type": "number",
+        "min": -155.0,
+        "max": 599.0,
+        "default": 30.0
+      },
+      {
+        "name": "horizontal_distance_to_roadways",
+        "label": "Horizontal distance to roadways",
+        "type": "number",
+        "min": 0.0,
+        "max": 7117.0,
+        "default": 2001.0
+      },
+      {
+        "name": "hillshade_9am",
+        "label": "Hillshade 9am",
+        "type": "number",
+        "min": 0.0,
+        "max": 254.0,
+        "default": 218.0
+      },
+      {
+        "name": "hillshade_noon",
+        "label": "Hillshade noon",
+        "type": "number",
+        "min": 0.0,
+        "max": 254.0,
+        "default": 226.0
+      },
+      {
+        "name": "hillshade_3pm",
+        "label": "Hillshade 3pm",
+        "type": "number",
+        "min": 0.0,
+        "max": 254.0,
+        "default": 143.0
+      },
+      {
+        "name": "horizontal_distance_to_fire_points",
+        "label": "Horizontal distance to fire points",
+        "type": "number",
+        "min": 0.0,
+        "max": 7142.0,
+        "default": 1708.0
+      }
+    ],
+    "metrics": {
+      "accuracy": 0.9113,
+      "balanced_accuracy": 0.8359377400891416,
+      "macro_f1": 0.8685514474263113,
+      "baseline_accuracy": 0.4876
+    },
+    "classes": [
+      "Aspen",
+      "Cottonwood / Willow",
+      "Douglas-fir",
+      "Krummholz",
+      "Lodgepole Pine",
+      "Ponderosa Pine",
+      "Spruce / Fir"
+    ],
+    "confusion_matrix": [
+      [
+        283,
+        0,
+        1,
+        0,
+        195,
+        6,
+        5
+      ],
+      [
+        0,
+        118,
+        5,
+        0,
+        0,
+        19,
+        0
+      ],
+      [
+        0,
+        2,
+        695,
+        0,
+        84,
+        114,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        963,
+        6,
+        0,
+        90
+      ],
+      [
+        17,
+        2,
+        39,
+        7,
+        13742,
+        45,
+        776
+      ],
+      [
+        1,
+        9,
+        51,
+        0,
+        87,
+        1698,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        29,
+        1067,
+        0,
+        9840
+      ]
+    ],
+    "classification_report": {
+      "Aspen": {
+        "precision": 0.9370860927152318,
+        "recall": 0.5775510204081633,
+        "f1-score": 0.7146464646464646,
+        "support": 490.0
+      },
+      "Cottonwood / Willow": {
+        "precision": 0.9007633587786259,
+        "recall": 0.8309859154929577,
+        "f1-score": 0.8644688644688645,
+        "support": 142.0
+      },
+      "Douglas-fir": {
+        "precision": 0.8775252525252525,
+        "recall": 0.7748049052396878,
+        "f1-score": 0.8229721728833629,
+        "support": 897.0
+      },
+      "Krummholz": {
+        "precision": 0.963963963963964,
+        "recall": 0.9093484419263456,
+        "f1-score": 0.9358600583090378,
+        "support": 1059.0
+      },
+      "Lodgepole Pine": {
+        "precision": 0.905210460443976,
+        "recall": 0.9394312277823352,
+        "f1-score": 0.9220034217853669,
+        "support": 14628.0
+      },
+      "Ponderosa Pine": {
+        "precision": 0.9022316684378321,
+        "recall": 0.9198266522210184,
+        "f1-score": 0.9109442060085837,
+        "support": 1846.0
+      },
+      "Spruce / Fir": {
+        "precision": 0.9185102212265472,
+        "recall": 0.8996160175534833,
+        "f1-score": 0.9089649438824996,
+        "support": 10938.0
+      },
+      "accuracy": 0.9113,
+      "macro avg": {
+        "precision": 0.9150415740130613,
+        "recall": 0.8359377400891416,
+        "f1-score": 0.8685514474263113,
+        "support": 30000.0
+      },
+      "weighted avg": {
+        "precision": 0.9116220548938904,
+        "recall": 0.9113,
+        "f1-score": 0.910438026720399,
+        "support": 30000.0
+      }
+    },
+    "limitation": "Colorado wilderness benchmark using ten continuous cartographic features. Random split may overstate geographic generalization. Not validated for India; never used to determine Indian land cover or relocation suitability. No imagery segmentation is claimed.",
+    "versions": {
+      "python": "3.12.13",
+      "sklearn": "1.9.1"
+    },
+    "evaluation_note": "Single frozen holdout; no hyperparameter selection on test data. Probabilities are not calibrated.",
+    "license": "CC BY 4.0",
+    "citation": "Blackard, J. (1998). Covertype. UCI Machine Learning Repository. DOI: 10.24432/C50K5N",
+    "sample_rows": 150000,
+    "target": "Seven observed forest cover types",
+    "sample": {
+      "elevation": 3077.0,
+      "aspect": 288.0,
+      "slope": 4.0,
+      "horizontal_distance_to_hydrology": 514.0,
+      "vertical_distance_to_hydrology": 34.0,
+      "horizontal_distance_to_roadways": 601.0,
+      "hillshade_9am": 209.0,
+      "hillshade_noon": 239.0,
+      "hillshade_3pm": 169.0,
+      "horizontal_distance_to_fire_points": 685.0
+    },
+    "sample_expected_label": "Lodgepole Pine",
+    "importance": [
+      {
+        "name": "elevation",
+        "value": 0.38289294697928716
+      },
+      {
+        "name": "aspect",
+        "value": 0.04962446376552917
+      },
+      {
+        "name": "slope",
+        "value": 0.03761591471369688
+      },
+      {
+        "name": "horizontal_distance_to_hydrology",
+        "value": 0.07849675292498966
+      },
+      {
+        "name": "vertical_distance_to_hydrology",
+        "value": 0.06165704501399388
+      },
+      {
+        "name": "horizontal_distance_to_roadways",
+        "value": 0.13684293328985753
+      },
+      {
+        "name": "hillshade_9am",
+        "value": 0.0400737993367834
+      },
+      {
+        "name": "hillshade_noon",
+        "value": 0.04775242191967517
+      },
+      {
+        "name": "hillshade_3pm",
+        "value": 0.03480274898664939
+      },
+      {
+        "name": "horizontal_distance_to_fire_points",
+        "value": 0.1302409730695377
+      }
+    ]
+  }
+]

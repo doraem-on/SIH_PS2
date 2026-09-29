@@ -1,0 +1,20 @@
+{
+  "downloaded_at": "2026-09-29T15:47:07.299922+00:00",
+  "sources": [
+    {
+      "name": "NASA Global Landslide Catalog",
+      "url": "https://data.nasa.gov/docs/legacy/Global_Landslide_Catalog_Export/Global_Landslide_Catalog_Export_rows.csv",
+      "sha256": "2c4898899dd4f373c4320e121c5b655ebb5394d431fa42e57ec4828d07d48b04",
+      "rows": 11033,
+      "license": "NASA catalog metadata does not specify a license; public access. Preserve NASA attribution and event source links."
+    },
+    {
+      "name": "UCI Covertype",
+      "url": "https://archive.ics.uci.edu/static/public/31/covertype.zip",
+      "sha256": "89a975c2457cd48e824238ae43c5a3cb762e42c4b4078d9b44a4514055105f6d",
+      "rows": 581012,
+      "license": "CC BY 4.0",
+      "citation": "Blackard, J. (1998). Covertype. UCI Machine Learning Repository. DOI: 10.24432/C50K5N"
+    }
+  ]
+}
