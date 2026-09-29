@@ -215,7 +215,18 @@ The local application uses one SQLite workspace. Public mode creates separate br
 - **Render free storage is ephemeral:** uploads, review decisions, audit records, and the session signing key are lost on service restart, redeploy, or spin-down. The bundled catalog and trained models are rebuilt from the repository. The UI displays this distinction.
 - For durable hosted work, use an approved persistent disk mounted at `BHOOMI_WORKSPACE_DIR`, back it up, and retain its `.session-key`. Keep one application instance; horizontal scaling requires shared persistence, coordinated quotas, and proper user authentication.
 
-## Deploy to Render
+## Deploy to Railway
+
+[`railway.json`](railway.json) selects the repository Dockerfile, a single application instance, `/api/health` with a 120-second readiness timeout, and a bounded restart-on-failure policy. The application accepts `RAILWAY_PUBLIC_DOMAIN` automatically as its HTTPS origin.
+
+1. Create a project in an eligible Railway workspace and add this repository as a Docker service, branch `main`.
+2. Set `BHOOMI_DEPLOYMENT_MODE=public`, `HOST=0.0.0.0`, `PYTHON=python`, `OMP_NUM_THREADS=1`, and `OPENBLAS_NUM_THREADS=1`.
+3. Attach a volume at `/workspace` and set `BHOOMI_WORKSPACE_DIR=/workspace` to retain browser databases and the signing key across deployments. If no volume is attached, use `BHOOMI_STORAGE_EPHEMERAL=true` and expect uploaded work to disappear on redeployment.
+4. Generate a Railway public domain targeting the service's `PORT`, deploy, and wait for the health check. Verify the atlas and both model predictions on the assigned HTTPS URL.
+
+The Docker build prepares the low-memory inference representation from the committed trained artifact. The running service does not download or retrain datasets. Hosting consumes the account's available trial credit or subscribed allowance; a trial is not a permanent free hosting guarantee. Keep the deployment to one instance while using the SQLite volume.
+
+## Alternative: deploy to Render
 
 [`render.yaml`](render.yaml) defines a Docker web service on the free plan in Singapore, with public mode enabled, low-thread CPU settings, and `/api/health` as the readiness check. The application automatically uses Render's `PORT` and `RENDER_EXTERNAL_URL`.
 
