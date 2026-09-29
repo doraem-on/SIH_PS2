@@ -137,7 +137,12 @@ function App() {
     [water, setWater] = useState(135),
     [modelId, setModelId] = useState(""),
     [inputs, setInputs] = useState<Any>({}),
-    [prediction, setPrediction] = useState<Any>(null);
+    [prediction, setPrediction] = useState<Any>(null),
+    [config, setConfig] = useState<Any>({
+      deployment_mode: "local",
+      max_upload_mb: 15,
+    });
+  const hosted = config.deployment_mode === "public";
   async function refresh() {
     const [o, s, m, r, a] = await Promise.all([
       api("overview"),
@@ -153,7 +158,11 @@ function App() {
     setAudit(a);
   }
   useEffect(() => {
-    refresh()
+    api("config")
+      .then((c) => {
+        setConfig(c);
+        return refresh();
+      })
       .catch((e) => setToast(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -255,7 +264,12 @@ function App() {
             <Layers size={16} />
           </span>
           <div>
-            Land intelligence<small>Local research workspace</small>
+            Land intelligence
+            <small>
+              {hosted
+                ? "Isolated browser workspace"
+                : "Local research workspace"}
+            </small>
           </div>
           <ChevronDown size={14} />
         </div>
@@ -292,7 +306,8 @@ function App() {
           <div className="profile">
             <div className="avatar">LA</div>
             <div>
-              Local analyst<small>Single-user pilot</small>
+              {hosted ? "Workspace analyst" : "Local analyst"}
+              <small>{hosted ? "Browser session" : "Single-user pilot"}</small>
             </div>
             <span className="status-dot" />
           </div>
@@ -314,7 +329,7 @@ function App() {
           <div className="header-right">
             <span className="connection">
               <i />
-              Local workspace
+              {hosted ? "Hosted workspace" : "Local workspace"}
             </span>
             <span className="header-separator" />
             <button
@@ -385,6 +400,19 @@ function App() {
               </button>
             </div>
           </div>
+          {hosted && (
+            <div className="notice">
+              <Shield size={18} />
+              <div>
+                <strong>Your browser, your workspace.</strong> Uploads and
+                decisions are separated from other visitors. Access uses this
+                browser’s cookie and expires after 7 days. Export work you want
+                to keep.
+                {config.storage_ephemeral &&
+                  " This free host resets uploaded work when the service sleeps, restarts, or redeploys. Download your results before leaving."}
+              </div>
+            </div>
+          )}
           {loading ? (
             <div className="loading">
               <RefreshCw className="spin" />
@@ -1582,7 +1610,8 @@ function App() {
               intelligence
             </span>
             <span>
-              Local research pilot <i /> Human review by design
+              {hosted ? "Hosted research pilot" : "Local research pilot"} <i />{" "}
+              Human review by design
             </span>
           </footer>
         </main>
@@ -1601,6 +1630,7 @@ function App() {
       )}
       {upload && (
         <UploadModal
+          config={config}
           close={() => setUpload(false)}
           save={async (data: Any) => {
             await api("sources", data);
@@ -1835,7 +1865,7 @@ function Stat({ label, value, detail, icon: Icon, color = "green" }: Any) {
     </div>
   );
 }
-function UploadModal({ close, save }: Any) {
+function UploadModal({ close, save, config }: Any) {
   const [name, setName] = useState(""),
     [kind, setKind] = useState("cadastral"),
     [quality, setQuality] = useState(75),
@@ -1864,8 +1894,10 @@ function UploadModal({ close, save }: Any) {
           </button>
         </div>
         <p>
-          Source data stays in this local workspace. Each import retains its
-          original features and a SHA-256 fingerprint.
+          {config.deployment_mode === "public"
+            ? `Uploads are stored on the hosting server in your isolated browser workspace. Access expires after 7 days; export your work before then. ${config.storage_ephemeral ? "This free host resets uploads and decisions when it sleeps, restarts, or redeploys. " : ""}Do not upload confidential official records to this public research demo.`
+            : "Source data stays in this local workspace."}{" "}
+          Each import retains its original features and a SHA-256 fingerprint.
         </p>
         <form
           onSubmit={async (e) => {
@@ -1874,8 +1906,10 @@ function UploadModal({ close, save }: Any) {
             setError("");
             try {
               if (!file) throw Error("Choose a GeoJSON file.");
-              if (file.size > 15 * 1024 * 1024)
-                throw Error("File must be smaller than 15 MB.");
+              if (file.size > config.max_upload_mb * 1024 * 1024)
+                throw Error(
+                  `File must be smaller than ${config.max_upload_mb} MB.`,
+                );
               await save({
                 name,
                 kind,
@@ -1892,7 +1926,9 @@ function UploadModal({ close, save }: Any) {
           <label className="file-drop">
             <Upload size={28} />
             <strong>{file ? file.name : "Choose your GeoJSON file"}</strong>
-            <span>WGS84 · up to 250 features · maximum 15 MB</span>
+            <span>
+              WGS84 · up to 250 features · maximum {config.max_upload_mb} MB
+            </span>
             <input
               type="file"
               aria-label="GeoJSON file"

@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: bhoomi-suraksha
+    runtime: docker
+    repo: https://github.com/doraem-on/SIH_PS2
+    branch: main
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: BHOOMI_DEPLOYMENT_MODE
+        value: public
+      - key: BHOOMI_STORAGE_EPHEMERAL
+        value: "true"
+      - key: BHOOMI_WORKSPACE_DIR
+        value: /app/data/workspaces
+      - key: HOST
+        value: 0.0.0.0
+      - key: PYTHON
+        value: python
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"

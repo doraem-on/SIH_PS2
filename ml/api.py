@@ -1,5 +1,6 @@
-"""Local-only analysis API. Uploaded source records are immutable."""
-import os, json, sqlite3, hashlib, uuid, math
+"""Loopback analysis API with isolated hosted workspaces and immutable source records."""
+import os, json, sqlite3, hashlib, uuid, math, hmac, re, time, threading
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 from functools import lru_cache
@@ -10,15 +11,64 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from ml.spatial import validate_collection, match_layers, screen_sites
+from ml.compact_forest import CompactForest, file_sha
 
 ROOT=Path(__file__).resolve().parents[1]
 DB=Path(os.environ.get('BHOOMI_DB', ROOT/'data/workspace.sqlite'))
-app=FastAPI(title='Bhoomi Suraksha',version='2.0.0')
+request_db=ContextVar('request_db',default=None)
+workspace_lock=threading.Lock()
+last_cleanup=0
+
+def public_mode(): return os.environ.get('BHOOMI_DEPLOYMENT_MODE')=='public'
+
+def workspace_path(sid):
+    global last_cleanup
+    directory=Path(os.environ.get('BHOOMI_WORKSPACE_DIR',ROOT/'data/workspaces'))
+    directory.mkdir(parents=True,exist_ok=True)
+    target=directory/f'{sid}.sqlite'
+    with workspace_lock:
+        now_ts=time.time()
+        if now_ts-last_cleanup>3600:
+            for entry in directory.glob('*.sqlite'):
+                if entry.stat().st_mtime<now_ts-7*86400:
+                    for suffix in ('','-wal','-shm'):
+                        (directory/(entry.name+suffix)).unlink(missing_ok=True)
+            last_cleanup=now_ts
+        existing=list(directory.glob('*.sqlite'))
+        if not target.exists():
+            if len(existing)>=100: raise HTTPException(503,'This research demo has reached its browser-workspace limit.')
+            target.touch(mode=0o600,exist_ok=False)
+        return target
+
+app=FastAPI(title='Bhoomi Suraksha',version='2.1.0')
+
+@app.middleware('http')
+async def isolate_browser_workspace(request,call_next):
+    token=None
+    if public_mode():
+        expected=os.environ.get('BHOOMI_INTERNAL_TOKEN','')
+        if not expected or not hmac.compare_digest(request.headers.get('x-internal-token',''),expected):
+            return JSONResponse({'detail':'Requests must pass through the application gateway.'},status_code=403)
+        if re.match(r'^/api/(overview|sources|matches|harmonize|audit|export|relocation)(/|$)',request.url.path):
+            sid=request.headers.get('x-workspace-id','')
+            if not re.fullmatch(r'[a-f0-9]{32}',sid): return JSONResponse({'detail':'A browser workspace is required.'},status_code=403)
+            try:
+                target=workspace_path(sid)
+                if request.method=='POST':
+                    if target.stat().st_size>25*1024*1024: return JSONResponse({'detail':'Workspace storage limit reached. Export your work.'},status_code=413)
+                    total=sum(p.stat().st_size for p in target.parent.glob('*.sqlite*'))
+                    if total>250*1024*1024: return JSONResponse({'detail':'Demo storage is full. Please retry later.'},status_code=503)
+                token=request_db.set(target)
+            except HTTPException as exc: return JSONResponse({'detail':exc.detail},status_code=exc.status_code)
+    try: return await call_next(request)
+    finally:
+        if token is not None: request_db.reset(token)
 
 def now(): return datetime.now(timezone.utc).isoformat()
 def connect():
-    DB.parent.mkdir(parents=True,exist_ok=True)
-    c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
+    target=request_db.get() or DB
+    target.parent.mkdir(parents=True,exist_ok=True)
+    c=sqlite3.connect(target); c.row_factory=sqlite3.Row
     c.execute('PRAGMA journal_mode=WAL')
     c.executescript('''CREATE TABLE IF NOT EXISTS sources (id TEXT PRIMARY KEY, name TEXT, kind TEXT, reliability REAL, created_at TEXT, checksum TEXT, geojson TEXT);
     CREATE TABLE IF NOT EXISTS matches (id TEXT PRIMARY KEY, run_id TEXT, left_source TEXT, right_source TEXT, result TEXT, status TEXT, updated_at TEXT);
@@ -28,7 +78,7 @@ def connect():
 def log(c,action,subject,reason,payload=None):
     last=c.execute('SELECT hash FROM audit ORDER BY id DESC LIMIT 1').fetchone()
     prev=last['hash'] if last else 'GENESIS'
-    at=now(); actor='Local analyst'
+    at=now(); actor='Browser workspace analyst' if public_mode() else 'Local analyst'
     raw=json.dumps(payload or {},sort_keys=True,separators=(',',':'))
     digest=hashlib.sha256(json.dumps([at,action,subject,actor,reason,raw,prev],separators=(',',':')).encode()).hexdigest()
     c.execute('INSERT INTO audit(at,action,subject,actor,reason,payload,previous_hash,hash) VALUES(?,?,?,?,?,?,?,?)',(at,action,subject,actor,reason,raw,prev,digest))
@@ -48,12 +98,17 @@ def cards():
 def model(name):
     path=ROOT/'models'/f'{name}.joblib'
     card=next((c for c in cards() if c['id']==name),None)
-    if not card or not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest()!=card['artifact_sha256']:
+    if not card or not path.exists() or file_sha(path)!=card['artifact_sha256']:
         raise HTTPException(503,'Model artifact is missing or its integrity check failed.')
+    if name=='forest-cover' and (ROOT/'models/forest-compact/manifest.json').exists():
+        return CompactForest(ROOT/'models/forest-compact',card['artifact_sha256'])
     return joblib.load(path)
 
+@app.get('/api/config')
+def config(): return {'deployment_mode':'public' if public_mode() else 'local','retention_days':7 if public_mode() else None,'max_upload_mb':2 if public_mode() else 15}
+
 @app.get('/api/health')
-def health(): return {'status':'ok','models':len(cards()),'catalog_events':len(events()['features']),'mode':'local single-user workspace'}
+def health(): return {'status':'ok','models':len(cards()),'catalog_events':len(events()['features']),'mode':'isolated browser workspace' if public_mode() else 'local single-user workspace'}
 @app.get('/api/overview')
 def overview():
     fc=events()['features']; india=[f for f in fc if f['properties']['country']=='India']
@@ -90,6 +145,7 @@ def add_source(body:SourceInput):
     raw=json.dumps(fc,sort_keys=True,allow_nan=False); checksum=hashlib.sha256(raw.encode()).hexdigest(); sid=str(uuid.uuid4())
     with connect() as c:
         c.execute('BEGIN IMMEDIATE')
+        if public_mode() and c.execute('SELECT COUNT(*) FROM sources').fetchone()[0]>=10: raise HTTPException(413,'The public demo allows up to 10 source layers per browser workspace.')
         if c.execute('SELECT id FROM sources WHERE checksum=? AND name=?',(checksum,body.name)).fetchone(): raise HTTPException(409,'This layer is already imported.')
         c.execute('INSERT INTO sources VALUES(?,?,?,?,?,?,?)',(sid,body.name,body.kind,body.reliability,now(),checksum,raw))
         log(c,'source.import',sid,'Imported user-supplied GeoJSON',{'name':body.name,'features':len(fc['features']),'sha256':checksum})
@@ -102,6 +158,7 @@ def harmonize(body:MatchInput):
     if body.left_source==body.right_source: raise HTTPException(422,'Select two different sources.')
     with connect() as c:
         c.execute('BEGIN IMMEDIATE')
+        if public_mode() and c.execute('SELECT COUNT(DISTINCT run_id) FROM matches').fetchone()[0]>=20: raise HTTPException(413,'The public demo allows up to 20 matching runs per browser workspace.')
         ss={s['id']:s for s in sources(c)}
         if body.left_source not in ss or body.right_source not in ss: raise HTTPException(404,'Source not found.')
         left,right=ss[body.left_source],ss[body.right_source]

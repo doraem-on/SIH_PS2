@@ -1,6 +1,6 @@
 {
   "name": "bhoomi-suraksha",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "Evidence-led geospatial harmonization and relocation decision support",
   "type": "module",
@@ -8,7 +8,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "start": "node scripts/start.mjs",
-    "test": ".venv/bin/python -m pytest tests -q",
+    "test": "node --test tests/http-policy.test.mjs && .venv/bin/python -m pytest tests -q",
     "train": ".venv/bin/python ml/train.py",
     "setup": "bash scripts/setup.sh",
     "prebuild": "node scripts/prepare-assets.mjs",

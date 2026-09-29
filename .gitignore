@@ -11,3 +11,8 @@ data/workspace*
 *.pid
 public/maplibre/
 *.tsbuildinfo
+
+data/workspaces/
+data/public-preview/
+.railway/
+models/forest-compact/

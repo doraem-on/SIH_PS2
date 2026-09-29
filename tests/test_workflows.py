@@ -109,3 +109,24 @@ def test_intra_layer_overlap_cannot_be_approved():
     left['geojson']['features'].append(other)
     r=match_layers(left,layer('Comparison'))[0]
     assert r['tier']=='field' and any('Overlap' in c for c in r['conflicts'])
+
+@pytest.fixture
+def hosted_client(tmp_path,monkeypatch):
+    monkeypatch.setenv('BHOOMI_DEPLOYMENT_MODE','public')
+    monkeypatch.setenv('BHOOMI_INTERNAL_TOKEN','test-gateway-only')
+    monkeypatch.setenv('BHOOMI_WORKSPACE_DIR',str(tmp_path/'workspaces'))
+    return TestClient(api.app)
+
+def test_hosted_workspaces_cannot_read_each_others_records(hosted_client):
+    a={'x-internal-token':'test-gateway-only','x-workspace-id':'a'*32}
+    b={'x-internal-token':'test-gateway-only','x-workspace-id':'b'*32}
+    assert hosted_client.post('/api/sources',json=layer(),headers=a).status_code==201
+    assert len(hosted_client.get('/api/sources',headers=a).json())==1
+    assert hosted_client.get('/api/sources',headers=b).json()==[]
+    assert hosted_client.get('/api/audit',headers=b).json()['entries']==[]
+    assert hosted_client.get('/api/overview',headers=b).json()['sources']==0
+
+def test_public_api_requires_gateway_and_safe_workspace_id(hosted_client):
+    assert hosted_client.get('/api/sources').status_code==403
+    assert hosted_client.get('/api/sources',headers={'x-internal-token':'test-gateway-only','x-workspace-id':'../escape'}).status_code==403
+    assert hosted_client.get('/api/models',headers={'x-internal-token':'test-gateway-only'}).status_code==200

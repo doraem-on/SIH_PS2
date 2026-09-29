@@ -15,8 +15,9 @@ The screenshots describe a broad government-scale concept. Their claims are trea
 | Carrying capacity | Measured polygon area and supplied daily water capacity | Roads, utilities, tenure, geological stability, consent, and complete hazard coverage require verification |
 | Relocation output | Exclusions, capacity comparisons, exposed habitations, distances, downloadable screening | No certified who/where/when assignment or automatic relocation decision |
 | ML | Two trained, saved, evaluated models with real dataset provenance and live inference | Landslide-size baseline is weak; Colorado cover model does not generalize to India without validation; no imagery segmentation model |
-| Review / audit | Local decisions, mandatory reasons, immutable originals, reversible derived corrections, hash chain | Single-user local analyst; no production multi-user RBAC or official identity provider |
-| Storage / deployment | SQLite local persistence, Express gateway, FastAPI; Docker packaging | Docker packaging is supplied but not locally exercised; PostGIS is archived from source and not the active database |
+| Review / audit | Local or isolated browser decisions, mandatory reasons, immutable originals, reversible derived corrections, hash chain | Browser sessions are not verified identities; no production RBAC or official identity provider |
+| Storage / deployment | SQLite, Express gateway, FastAPI; Docker and Render configuration; signed browser sessions, quotas, origin checks | Render free storage is ephemeral; PostGIS is archived and not active; cloud readiness must be verified after deployment |
+| Low-memory inference | Same trained forest exported as checksum-verified memory-mapped tree arrays | Equivalent to sklearn, not a new model; build-time conversion still needs memory for the full original artifact |
 
 ## Why no fabricated official data
 

@@ -1,4 +1,7 @@
 .git
+.env
+.env.*
+.railway
 .venv
 node_modules
 dist
@@ -8,3 +11,7 @@ legacy
 *.log
 __pycache__
 .pytest_cache
+
+data/workspaces
+data/public-preview
+models/forest-compact
